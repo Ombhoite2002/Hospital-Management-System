@@ -50,3 +50,60 @@ module.exports.registerUser = async (req, res) => {
     });
   }
 };
+
+
+// ===================== LOGIN USER (NEW) =====================
+module.exports.loginUser = async (req, res) => {
+  try {
+    // 1️⃣ Validate Email/Password
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: errors.array(),
+      });
+    }
+
+    const { email, password } = req.body;
+
+    // 2️⃣ Check if user exists
+    const user = await User.findOne({ where: { email }, raw: false }); 
+    // raw:false → required to access instance methods comparePassword()
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    // 3️⃣ Compare hashed password with entered password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    // 4️⃣ Generate JWT Token
+    const token = user.generateAuthToken();
+
+    // 5️⃣ Return user details (password removed automatically)
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      user: user.toJSON(),
+      token,
+    });
+
+  } catch (error) {
+    console.error("Error in loginUser:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+

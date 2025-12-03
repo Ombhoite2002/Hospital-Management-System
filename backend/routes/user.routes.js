@@ -35,4 +35,23 @@ router.post(
   userController.registerUser
 );
 
+// ----------------------------------------------------
+// USER LOGIN ROUTE  (NEW)
+// ----------------------------------------------------
+router.post(
+  "/login",
+  [
+    body("email")
+      .trim()
+      .isEmail()
+      .withMessage("Valid email is required"),
+
+    body("password")
+      .trim()
+      .notEmpty()
+      .withMessage("Password is required"),
+  ],
+  userController.loginUser   // NEW CONTROLLER FUNCTION
+);
+
 module.exports = router;

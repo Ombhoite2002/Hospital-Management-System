@@ -17,7 +17,7 @@ sequelize
   })
   .then(() => {
     console.log("Tables are synced.");
-    app.listen(PORT, () => console.log(`Server running on port ${port}`));
+    app.listen(port, () => console.log(`Server running on port ${port}`));
   })
   .catch((err) => {
     console.error("DB connection or sync error:", err);

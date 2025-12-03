@@ -35,3 +35,37 @@ module.exports.createUser = async ({ email, password, role }) => {
     throw err;
   }
 };
+
+
+// ======================================================
+// USER SERVICE – LOGIN USER (NEW)
+// ======================================================
+module.exports.loginUser = async ({ email, password }) => {
+  try {
+    // 1️⃣ Find user by email
+    const user = await User.findOne({ where: { email }, raw: false });
+    if (!user) {
+      const error = new Error("Invalid email or password");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // 2️⃣ Verify password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      const error = new Error("Invalid email or password");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // 3️⃣ Generate token
+    const token = user.generateAuthToken();
+
+    return { user: user.toJSON(), token };
+
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    throw err;
+  }
+};
+
