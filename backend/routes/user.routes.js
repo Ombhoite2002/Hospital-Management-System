@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { body } = require("express-validator");
 const userController = require("../controller/user.controller");
+const authMiddleware = require("../middleware/authMiddleware");
 
 // ----------------------------------------------------
 // USER REGISTER ROUTE
@@ -53,5 +54,18 @@ router.post(
   ],
   userController.loginUser   // NEW CONTROLLER FUNCTION
 );
+
+// Temporary test route – protected
+router.get("/test-protected", authMiddleware, (req, res) => {
+  res.json({
+    success: true,
+    message: "You accessed a protected route!",
+    user: req.user
+  });
+});
+
+// LOGOUT ROUTE
+router.post("/logout", userController.logoutUser);
+
 
 module.exports = router;

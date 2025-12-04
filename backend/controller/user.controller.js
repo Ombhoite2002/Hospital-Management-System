@@ -107,3 +107,21 @@ module.exports.loginUser = async (req, res) => {
   }
 };
 
+// ===================== LOGOUT USER =====================
+module.exports.logoutUser = async (req, res) => {
+  try {
+    // No server-side token deletion needed (JWT is stateless)
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully. Please delete token on client side."
+    });
+
+  } catch (error) {
+    console.error("Error in logoutUser:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
