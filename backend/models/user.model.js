@@ -22,10 +22,10 @@ module.exports = (sequelize) => {
     password: {
       type: DataTypes.STRING,
       allowNull: false,
-      // Password should not be selected in response by default
-      get() {
-        return undefined; // hide password automatically
-      }
+      // // Password should not be selected in response by default
+      // get() {
+      //   return undefined; // hide password automatically
+      // }
     },
 
     role: {

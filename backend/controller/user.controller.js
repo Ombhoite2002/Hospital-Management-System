@@ -1,10 +1,10 @@
 const { validationResult } = require("express-validator");
-const { User } = require("../models");
+const userService = require("../services/user.service");
 
 // ===================== REGISTER USER =====================
 module.exports.registerUser = async (req, res) => {
   try {
-    // Validate request fields
+    // 1️⃣ Validate request data
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -14,48 +14,35 @@ module.exports.registerUser = async (req, res) => {
       });
     }
 
+    // 2️⃣ Call service
     const { email, password, role } = req.body;
-
-    // Check if the user already exists
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: "Email already registered",
-      });
-    }
-
-    // Create new user (password auto-hashed by hooks)
-    const newUser = await User.create({
-      email,
-      password,
-      role,
-    });
-
-    // Generate token using model method
-    const token = newUser.generateAuthToken();
+    const user = await userService.createUser({ email, password, role });
 
     return res.status(201).json({
       success: true,
       message: "User registered successfully",
-      user: newUser,  // password already removed because of toJSON()
-      token,
-    });
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role
+    },
+  token: user.token
+});
 
-  } catch (error) {
-    console.error("Error in registerUser:", error);
-    return res.status(500).json({
+  } catch (err) {
+    console.error("Error in registerUser:", err);
+    return res.status(err.statusCode || 500).json({
       success: false,
-      message: "Internal Server Error",
+      message: err.message || "Internal Server Error",
     });
   }
 };
 
 
-// ===================== LOGIN USER (NEW) =====================
+// ===================== LOGIN USER =====================
 module.exports.loginUser = async (req, res) => {
   try {
-    // 1️⃣ Validate Email/Password
+    // 1️⃣ Validate data
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -65,63 +52,31 @@ module.exports.loginUser = async (req, res) => {
       });
     }
 
+    // 2️⃣ Call service
     const { email, password } = req.body;
+    const result = await userService.loginUser({ email, password });
 
-    // 2️⃣ Check if user exists
-    const user = await User.findOne({ where: { email }, raw: false }); 
-    // raw:false → required to access instance methods comparePassword()
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
-
-    // 3️⃣ Compare hashed password with entered password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
-
-    // 4️⃣ Generate JWT Token
-    const token = user.generateAuthToken();
-
-    // 5️⃣ Return user details (password removed automatically)
     return res.status(200).json({
       success: true,
       message: "Login successful",
-      user: user.toJSON(),
-      token,
+      user: result.user,
+      token: result.token,
     });
 
-  } catch (error) {
-    console.error("Error in loginUser:", error);
-    return res.status(500).json({
+  } catch (err) {
+    console.error("Error in loginUser:", err);
+    return res.status(err.statusCode || 500).json({
       success: false,
-      message: "Internal Server Error",
+      message: err.message || "Internal Server Error",
     });
   }
 };
 
-// ===================== LOGOUT USER =====================
+
+// ===================== LOGOUT =====================
 module.exports.logoutUser = async (req, res) => {
-  try {
-    // No server-side token deletion needed (JWT is stateless)
-    return res.status(200).json({
-      success: true,
-      message: "Logged out successfully. Please delete token on client side."
-    });
-
-  } catch (error) {
-    console.error("Error in logoutUser:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-  }
+  return res.status(200).json({
+    success: true,
+    message: "Logged out successfully. Please delete token on client side.",
+  });
 };
-
